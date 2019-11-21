@@ -1,0 +1,37 @@
+version: "3.7"
+
+networks:
+  proxy:
+
+services:
+  proxy:
+    image: nginx
+    ports:
+      - 80:80
+    networks:
+      - proxy
+    command: |
+      bash -c 'bash -s <<EOF
+        cat > /etc/nginx/nginx.conf <<EON
+          daemon off;
+          events {}
+          http {
+            gzip on;
+            server {
+              listen 80;
+              location / {
+                proxy_pass http://app:3000;
+              }
+            }
+          }
+      EON
+      nginx
+      EOF'
+  app:
+    image: node:lts
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    command: bash -c 'npm i && npm run dev'
+    networks:
+      - proxy
